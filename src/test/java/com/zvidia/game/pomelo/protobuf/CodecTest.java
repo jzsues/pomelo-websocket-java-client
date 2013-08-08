@@ -12,7 +12,7 @@ import java.util.Arrays;
  * To change this template use File | Settings | File Templates.
  */
 public class CodecTest {
-    int count = 100000;
+    int count = 1000;
 
     @Test
     public void testEncodeUInt64() {
