@@ -25,4 +25,21 @@ public enum WireType {
     public int getValue() {
         return value;
     }
+
+    public static WireType valueOfType(String name) {
+        boolean simpleType = WireType.isSimpleType(name);
+        return simpleType ? WireType.valueOf(name) : WireType._message;
+    }
+
+    public static boolean isSimpleType(String name) {
+        if (WireType._uInt32.name().equals(name)
+                || WireType._sInt32.name().equals(name)
+                || WireType._int32.name().equals(name)
+                || WireType._double.name().equals(name)
+                || WireType._string.name().equals(name)
+                || WireType._float.name().equals(name)) {
+            return true;
+        }
+        return false;
+    }
 }

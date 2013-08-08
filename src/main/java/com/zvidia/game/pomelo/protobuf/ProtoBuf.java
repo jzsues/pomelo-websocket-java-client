@@ -1,55 +1,38 @@
 package com.zvidia.game.pomelo.protobuf;
 
-import java.io.Serializable;
-import java.util.List;
+import com.zvidia.game.pomelo.exception.PomeloException;
 
 /**
  * Created with IntelliJ IDEA.
  * User: jiangzm
- * Date: 13-8-7
- * Time: 下午9:08
+ * Date: 13-8-8
+ * Time: 上午10:05
  * To change this template use File | Settings | File Templates.
  */
-public class ProtoBuf implements Serializable {
-    private String option;
+public class ProtoBuf {
+    private Encoder encoder;
 
-    private String type;
+    private Decoder decoder;
 
-    private int tag;
-
-
-    public ProtoBuf() {
+    public ProtoBuf(Encoder encoder, Decoder decoder) {
+        this.encoder = encoder;
+        this.decoder = decoder;
     }
 
-    public ProtoBuf(String option, String type, int tag) {
-        this.option = option;
-        this.type = type;
-        this.tag = tag;
+    public byte[] encode(String proto, String msg) throws PomeloException {
+        return this.encoder.encode(proto, msg);
     }
 
-    public String getOption() {
-        return option;
+    public String encodeBase64(String proto, String msg) throws PomeloException {
+        byte[] bytes = this.encoder.encode(proto, msg);
+        return new String(bytes);
     }
 
-    public void setOption(String option) {
-        this.option = option;
+    public String decode(String proto, byte[] bytes) throws PomeloException {
+        return this.decoder.decode(proto, bytes);
     }
 
-    public String getType() {
-        return type;
+    public String decodeBase64(String proto, String str) throws PomeloException {
+        return this.decoder.decode(proto, str.getBytes());
     }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public int getTag() {
-        return tag;
-    }
-
-    public void setTag(int tag) {
-        this.tag = tag;
-    }
-
-
 }

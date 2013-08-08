@@ -67,7 +67,7 @@ public class ProtoBufParser {
                     }
                     String name = params[2];
                     String type = params[1];
-                    ProtoBuf buf = new ProtoBuf(option, type, _tag);
+                    Proto buf = new Proto(option, type, _tag);
                     protos.put(name, new JSONObject(buf));
                     tags.put(tagStr, name);
                 }

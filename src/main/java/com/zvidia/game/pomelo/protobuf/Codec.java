@@ -11,12 +11,12 @@ import com.zvidia.game.pomelo.utils.ByteUtils;
  */
 public class Codec {
 
-    public static byte[] encodeUInt32(long num) {
-        return ByteUtils.longToBytes(num);
+    public static byte[] encodeUInt32(int num) {
+        return ByteUtils.intToBytes(num);
     }
 
-    public static long decodeUInt32(byte[] bytes) {
-        return ByteUtils.bytesToLong(bytes);
+    public static int decodeUInt32(byte[] bytes) {
+        return ByteUtils.bytesToInt(bytes);
     }
 
     public static byte[] encodeSInt32(int num) {
@@ -26,4 +26,22 @@ public class Codec {
     public static int decodeSInt32(byte[] bytes) {
         return ByteUtils.bytesToInt(bytes);
     }
+
+    public static byte[] encodeUInt64(long num) {
+        return ByteUtils.longToBytes(num);
+    }
+
+    public static long decodeUInt64(byte[] bytes) {
+        return ByteUtils.bytesToLong(bytes);
+    }
+
+    public static byte[] encodeSInt64(long num) {
+        return ByteUtils.longToBytes(num);
+    }
+
+    public static long decodeSInt64(byte[] bytes) {
+        return ByteUtils.bytesToLong(bytes);
+    }
+
+
 }

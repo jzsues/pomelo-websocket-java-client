@@ -50,7 +50,10 @@ public class Encoder {
         int offset = 0;
         if (_proto != null) {
             offset = encodeMsg(buffer, offset, _proto, _msg);
-            return buffer.array();
+            buffer.flip();
+            byte[] res = new byte[offset];
+            buffer.get(res, 0, offset);
+            return res;
         }
         return null;
     }
@@ -65,8 +68,10 @@ public class Encoder {
             if (!value.isNull(ProtoBufParser.OPTION_KEY)) {
                 String option = value.getString(ProtoBufParser.OPTION_KEY);
                 String type = value.getString(ProtoBufParser.TYPE_KEY);
-                JSONObject messages = value.getJSONObject(ProtoBufParser.MESSAGES_KEY);
-                JSONObject tags = value.getJSONObject(ProtoBufParser.TAGS_KEY);
+                boolean msgNull = value.isNull(ProtoBufParser.MESSAGES_KEY);
+                JSONObject messages = msgNull ? new JSONObject() : value.getJSONObject(ProtoBufParser.MESSAGES_KEY);
+                boolean tagNull = value.isNull(ProtoBufParser.TAGS_KEY);
+                JSONObject tags = tagNull ? new JSONObject() : value.getJSONObject(ProtoBufParser.TAGS_KEY);
                 MessageOption messageOption = MessageOption.valueOf(option);
                 switch (messageOption) {
                     case required: {
@@ -114,12 +119,15 @@ public class Encoder {
                 case required:
                 case optional: {
                     offset = writeBytes(buffer, offset, encodeTag(type, tag));
-                    offset = encodeProp(value, type, offset, buffer, _proto);
+                    offset = encodeProp(value, type, offset, buffer, proto);
                     break;
                 }
                 case repeated: {
                     if (value != null) {
-                        offset = encodeArray((JSONArray) value, _proto, offset, buffer, proto);
+                        JSONArray array = (JSONArray) value;
+                        if (array.length() > 0) {
+                            offset = encodeArray(array, _proto, offset, buffer, proto);
+                        }
                     }
                     break;
                 }
@@ -131,7 +139,7 @@ public class Encoder {
     private int encodeArray(JSONArray array, JSONObject _proto, int offset, ByteBuffer buffer, JSONObject proto) {
         String type = _proto.getString(ProtoBufParser.TYPE_KEY);
         int tag = _proto.getInt(ProtoBufParser.TAG_KEY);
-        WireType _type = WireType.valueOf(type);
+        WireType _type = WireType.valueOfType(type);
 
         if (_type != WireType._string && _type != WireType._message) {
             //simple type
@@ -141,16 +149,22 @@ public class Encoder {
                 JSONObject obj = array.getJSONObject(i);
                 offset = encodeProp(obj, type, offset, buffer, proto);
             }
+        } else {
+            //complex type
+            for (int i = 0; i < array.length(); i++) {
+                offset = writeBytes(buffer, offset, encodeTag(type, tag));
+                JSONObject obj = array.getJSONObject(i);
+                offset = encodeProp(obj, type, offset, buffer, proto);
+            }
         }
         return offset;
     }
 
     private int encodeProp(Object value, String type, int offset, ByteBuffer buffer, JSONObject proto) {
-        WireType _type = WireType.valueOf("_" + type);
-
+        WireType _type = WireType.valueOfType("_" + type);
         switch (_type) {
             case _uInt32: {
-                long _value = Long.parseLong(value.toString());
+                int _value = Integer.parseInt(value.toString());
                 offset = writeBytes(buffer, offset, Codec.encodeUInt32(_value));
                 break;
             }
@@ -181,13 +195,14 @@ public class Encoder {
                 break;
             }
             default: {
-                JSONObject messages = proto.getJSONObject(ProtoBufParser.MESSAGES_KEY);
+                boolean aNull = proto.isNull(ProtoBufParser.MESSAGES_KEY);
+                JSONObject messages = aNull ? new JSONObject() : proto.getJSONObject(ProtoBufParser.MESSAGES_KEY);
                 if (!messages.isNull(type)) {
                     ByteBuffer tmpBuffer = ByteBuffer.allocate(value.toString().getBytes(ProtoBufParser.DEFAULT_CHARSET).length * 2);
                     int length = encodeMsg(tmpBuffer, 0, messages.getJSONObject(type), (JSONObject) value);
                     offset = writeBytes(buffer, offset, Codec.encodeUInt32(length));
                     //contact the object
-                    buffer.put(tmpBuffer.array(), offset, length);
+                    buffer.put(tmpBuffer.array(), 0, length);
                     offset += length;
                 }
                 break;
@@ -197,12 +212,19 @@ public class Encoder {
     }
 
     private int writeBytes(ByteBuffer buffer, int offset, byte[] bytes) {
-        buffer.put(bytes, offset, bytes.length);
+        buffer.put(bytes, 0, bytes.length);
         return offset + bytes.length;
     }
 
+    /*
+    * int -> byte
+    * */
     private byte[] encodeTag(String type, int tag) {
-        WireType _type = WireType.valueOf("_" + type);
-        return Codec.encodeUInt32(tag);
+        String _type = "_" + type;
+        WireType __type = WireType.valueOfType(_type);
+        int num = (tag << 3) | __type.getValue();
+        byte[] bytes = Codec.encodeUInt32(num);
+        return bytes;
+
     }
 }
