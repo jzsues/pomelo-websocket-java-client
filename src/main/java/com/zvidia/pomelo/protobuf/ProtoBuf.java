@@ -1,6 +1,6 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
-import com.zvidia.game.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.exception.PomeloException;
 
 /**
  * Created with IntelliJ IDEA.

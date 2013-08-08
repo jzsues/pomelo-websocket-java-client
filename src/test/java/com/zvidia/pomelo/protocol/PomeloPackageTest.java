@@ -1,6 +1,6 @@
-package com.zvidia.game.pomelo.protocol;
+package com.zvidia.pomelo.protocol;
 
-import com.zvidia.game.pomelo.protocol.PomeloPackage;
+import com.zvidia.pomelo.protocol.PomeloPackage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,10 +32,10 @@ public class PomeloPackageTest {
         int[] buffer = PomeloPackage.strencode(str);
         System.out.println("buffer:" + Arrays.toString(buffer));
         int type = PomeloPackage.TYPE_HANDSHAKE;
-        int[] encode = PomeloPackage.encode(type, buffer);
+        byte[] encode = PomeloPackage.encode(type, buffer);
         System.out.println("encode:" + Arrays.toString(encode));
-        PomeloPackage.Package decode = PomeloPackage.decode(encode);
-        System.out.println("decode body:" + Arrays.toString(decode.getBody()));
+        //PomeloPackage.Package decode = PomeloPackage.decode(encode);
+       // System.out.println("decode body:" + Arrays.toString(decode.getBody()));
     }
 
 }

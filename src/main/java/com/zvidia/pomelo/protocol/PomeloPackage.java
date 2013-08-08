@@ -1,4 +1,4 @@
-package com.zvidia.game.pomelo.protocol;
+package com.zvidia.pomelo.protocol;
 
 import java.util.*;
 
@@ -93,17 +93,17 @@ public class PomeloPackage {
      * @param {ByteArray} body   body content in bytes
      * @return {ByteArray}        new byte array that contains encode result
      */
-    public static int[] encode(int type, int[] body) {
+    public static byte[] encode(int type, int[] body) {
         int length = body != null ? body.length : 0;
-        int[] buffer = new int[PKG_HEAD_BYTES + length];
+        byte[] buffer = new byte[PKG_HEAD_BYTES + length];
         int index = 0;
-        buffer[index++] = type & 0xff;
-        buffer[index++] = (length >> 16) & 0xff;
-        buffer[index++] = (length >> 8) & 0xff;
-        buffer[index++] = length & 0xff;
+        buffer[index++] = (byte) (type);
+        buffer[index++] = (byte) ((length >> 16));
+        buffer[index++] = (byte) ((length >> 8));
+        buffer[index++] = (byte) (length);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                buffer[PKG_HEAD_BYTES + i] = body[i];
+            for (byte i = 0; i < body.length; i++) {
+                buffer[PKG_HEAD_BYTES + i] = (byte) body[i];
             }
         }
         return buffer;
@@ -116,14 +116,17 @@ public class PomeloPackage {
      * @param {ByteArray} buffer byte array containing package content
      * @return {Object}           {type: package type, buffer: body byte array}
      */
-    public static Package decode(int[] buffer) {
-        int[] bytes = Arrays.copyOf(buffer, buffer.length);
+    public static Package decode(byte[] buffer) {
+        byte[] bytes = Arrays.copyOf(buffer, buffer.length);
         int type = bytes[0];
         int index = 1;
-        int length = ((bytes[index++]) << 16 | (bytes[index++]) << 8 | bytes[index++]) >>> 0;
+        byte v1 = bytes[index++];
+        byte v2 = bytes[index++];
+        byte v3 = bytes[index++];
+        int length = (v1 << 16) | (v2 << 8) | (v3 >>> 0) & 0xff;
         int[] body = length > 0 ? new int[length] : null;
         for (int i = 0; i < body.length; i++) {
-            body[i] = bytes[PKG_HEAD_BYTES + i];
+            body[i] = bytes[PKG_HEAD_BYTES + i] & 0xff;
         }
         return new Package(type, body);
     }

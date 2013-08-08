@@ -1,4 +1,4 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
 import org.json.JSONObject;
 

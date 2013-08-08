@@ -1,7 +1,8 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
-import com.zvidia.game.pomelo.exception.PomeloException;
-import com.zvidia.game.pomelo.utils.StringUtils;
+import com.zvidia.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.utils.StringUtils;
+import com.zvidia.pomelo.exception.PomeloException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

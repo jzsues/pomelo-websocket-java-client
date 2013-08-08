@@ -1,6 +1,6 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
-import com.zvidia.game.pomelo.utils.ByteUtils;
+import com.zvidia.pomelo.utils.ByteUtils;
 
 /**
  * Created with IntelliJ IDEA.

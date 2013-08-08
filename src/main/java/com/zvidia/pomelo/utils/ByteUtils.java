@@ -1,4 +1,4 @@
-package com.zvidia.game.pomelo.utils;
+package com.zvidia.pomelo.utils;
 
 import java.nio.ByteBuffer;
 

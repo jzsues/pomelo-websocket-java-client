@@ -1,6 +1,10 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
-import com.zvidia.game.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.protobuf.Decoder;
+import com.zvidia.pomelo.protobuf.Encoder;
+import com.zvidia.pomelo.protobuf.ProtoBuf;
+import com.zvidia.pomelo.protobuf.ProtoBufParser;
 import org.json.JSONObject;
 import org.junit.Test;
 

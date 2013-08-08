@@ -1,5 +1,6 @@
-package com.zvidia.game.pomelo.protobuf;
+package com.zvidia.pomelo.protobuf;
 
+import com.zvidia.pomelo.protobuf.Codec;
 import org.junit.Test;
 
 import java.util.Arrays;

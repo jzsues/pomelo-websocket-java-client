@@ -1,8 +1,8 @@
-package com.zvidia.game.pomelo.protocol;
+package com.zvidia.pomelo.protocol;
 
-import com.zvidia.game.pomelo.exception.PomeloException;
-import com.zvidia.game.pomelo.protocol.PomeloMessage;
-import com.zvidia.game.pomelo.protocol.PomeloPackage;
+import com.zvidia.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.protocol.PomeloMessage;
+import com.zvidia.pomelo.protocol.PomeloPackage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

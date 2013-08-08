@@ -1,4 +1,4 @@
-package com.zvidia.game.pomelo.exception;
+package com.zvidia.pomelo.exception;
 
 /**
  * Created with IntelliJ IDEA.

@@ -1,6 +1,6 @@
-package com.zvidia.game.pomelo.protocol;
+package com.zvidia.pomelo.protocol;
 
-import com.zvidia.game.pomelo.exception.PomeloException;
+import com.zvidia.pomelo.exception.PomeloException;
 
 import java.util.Arrays;
 
