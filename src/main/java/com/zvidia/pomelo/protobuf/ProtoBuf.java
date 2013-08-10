@@ -1,6 +1,7 @@
 package com.zvidia.pomelo.protobuf;
 
 import com.zvidia.pomelo.exception.PomeloException;
+import org.json.JSONObject;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,9 +15,25 @@ public class ProtoBuf {
 
     private Decoder decoder;
 
+    public ProtoBuf() {
+    }
+
     public ProtoBuf(Encoder encoder, Decoder decoder) {
         this.encoder = encoder;
         this.decoder = decoder;
+    }
+
+    public void initProtos(JSONObject encodeProtos, JSONObject decodeProtos) {
+        if (encoder == null) {
+            encoder = new Encoder(encodeProtos);
+        } else {
+            encoder.setProtos(encodeProtos);
+        }
+        if (decoder == null) {
+            decoder = new Decoder(decodeProtos);
+        } else {
+            decoder.setProtos(decodeProtos);
+        }
     }
 
     public byte[] encode(String proto, String msg) throws PomeloException {

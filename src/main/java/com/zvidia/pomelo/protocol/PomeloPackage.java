@@ -18,8 +18,8 @@ public class PomeloPackage {
     public static final int TYPE_DATA = 4;
     public static final int TYPE_KICK = 5;
 
-    public static int[] strencode(String str) {
-        int[] byteArray = new int[str.length() * 3];
+    public static byte[] strencode(String str) {
+        byte[] byteArray = new byte[str.length() * 3];
         int offset = 0;
         for (int i = 0; i < str.length(); i++) {
             int charCode = str.codePointAt(i);
@@ -38,28 +38,33 @@ public class PomeloPackage {
                 codes[2] = 0x80 | (charCode & 0x3f);
             }
             for (int j = 0; j < codes.length; j++) {
-                byteArray[offset] = codes[j];
+                byteArray[offset] = (byte) codes[j];
                 ++offset;
             }
         }
-        int[] _buffer = Arrays.copyOfRange(byteArray, 0, offset);
+        byte[] _buffer = Arrays.copyOfRange(byteArray, 0, offset);
         return _buffer;
     }
 
-    public static String strdecode(int[] buffer) {
+    public static String strdecode(byte[] buffer) {
         int offset = 0;
         int charCode = 0;
         int end = buffer.length;
         List<Integer> array = new LinkedList<Integer>();
         while (offset < end) {
-            if (buffer[offset] < 128) {
-                charCode = buffer[offset];
+            byte b = buffer[offset];
+            int bi = b & 0xff;
+            if (bi < 128) {
+                charCode = bi;
                 offset += 1;
-            } else if (buffer[offset] < 224) {
-                charCode = ((buffer[offset] & 0x3f) << 6) + (buffer[offset + 1] & 0x3f);
+            } else if (bi < 224) {
+                int t1 = buffer[offset + 1] & 0xff;
+                charCode = ((bi & 0x3f) << 6) + (t1 & 0x3f);
                 offset += 2;
             } else {
-                charCode = ((buffer[offset] & 0x0f) << 12) + ((buffer[offset + 1] & 0x3f) << 6) + (buffer[offset + 2] & 0x3f);
+                int t1 = buffer[offset + 1] & 0xff;
+                int t2 = buffer[offset + 2] & 0xff;
+                charCode = ((bi & 0x0f) << 12) + ((t1 & 0x3f) << 6) + (t2 & 0x3f);
                 offset += 3;
             }
             array.add(charCode);
@@ -93,7 +98,7 @@ public class PomeloPackage {
      * @param {ByteArray} body   body content in bytes
      * @return {ByteArray}        new byte array that contains encode result
      */
-    public static byte[] encode(int type, int[] body) {
+    public static byte[] encode(int type, byte[] body) {
         int length = body != null ? body.length : 0;
         byte[] buffer = new byte[PKG_HEAD_BYTES + length];
         int index = 0;
@@ -124,16 +129,16 @@ public class PomeloPackage {
         byte v2 = bytes[index++];
         byte v3 = bytes[index++];
         int length = (v1 << 16) | (v2 << 8) | (v3 >>> 0) & 0xff;
-        int[] body = length > 0 ? new int[length] : new int[0];
+        byte[] body = length > 0 ? new byte[length] : new byte[0];
         for (int i = 0; i < body.length; i++) {
-            body[i] = bytes[PKG_HEAD_BYTES + i] & 0xff;
+            body[i] = bytes[PKG_HEAD_BYTES + i];
         }
         return new Package(type, body);
     }
 
     public static class Package {
         int type;
-        int[] body;
+        byte[] body;
 
         public int getType() {
             return type;
@@ -143,15 +148,15 @@ public class PomeloPackage {
             this.type = type;
         }
 
-        public int[] getBody() {
+        public byte[] getBody() {
             return body;
         }
 
-        public void setBody(int[] body) {
+        public void setBody(byte[] body) {
             this.body = body;
         }
 
-        public Package(int type, int[] body) {
+        public Package(int type, byte[] body) {
             this.type = type;
             this.body = body;
         }

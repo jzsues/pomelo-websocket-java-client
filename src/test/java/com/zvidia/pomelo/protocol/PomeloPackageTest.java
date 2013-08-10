@@ -20,7 +20,7 @@ public class PomeloPackageTest {
     @Test
     public void testStrendecode() {
         String str = "你好, abc~~~艾丝凡";
-        int[] buffer = PomeloPackage.strencode(str);
+        byte[] buffer = PomeloPackage.strencode(str);
         System.out.println(Arrays.toString(buffer));
         String strdecode = PomeloPackage.strdecode(buffer);
         System.out.println(strdecode);
@@ -29,13 +29,13 @@ public class PomeloPackageTest {
     @Test
     public void testEndecode() {
         String str = "你好, abc~~~艾丝凡";
-        int[] buffer = PomeloPackage.strencode(str);
+        byte[] buffer = PomeloPackage.strencode(str);
         System.out.println("buffer:" + Arrays.toString(buffer));
         int type = PomeloPackage.TYPE_HANDSHAKE;
         byte[] encode = PomeloPackage.encode(type, buffer);
         System.out.println("encode:" + Arrays.toString(encode));
-        //PomeloPackage.Package decode = PomeloPackage.decode(encode);
-       // System.out.println("decode body:" + Arrays.toString(decode.getBody()));
+        PomeloPackage.Package decode = PomeloPackage.decode(encode);
+        System.out.println("decode body:" + new String(decode.getBody()));
     }
 
 }

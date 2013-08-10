@@ -1,6 +1,7 @@
 package com.zvidia.pomelo.protocol;
 
 import com.zvidia.pomelo.exception.PomeloException;
+import org.json.JSONObject;
 
 import java.util.Arrays;
 
@@ -29,24 +30,27 @@ public class PomeloMessage {
     public static final int TYPE_PUSH = 3;
 
 
-    public static Message decode(int[] buffer) {
-        int[] bytes = Arrays.copyOf(buffer, buffer.length);
+    public static final String MSG_ROUTE_KEY = "route";
+
+
+    public static Message decode(byte[] buffer) {
+        byte[] bytes = Arrays.copyOf(buffer, buffer.length);
         int bytesLen = bytes.length;
         int offset = 0;
         int id = 0;
         String route = null;
 
         // parse flag
-        int flag = bytes[offset++];
+        int flag = bytes[offset++] & 0xff;
         int compressRoute = flag & MSG_COMPRESS_ROUTE_MASK;
         int type = (flag >> 1) & MSG_TYPE_MASK;
 
         // parse id
         if (msgHasId(type)) {
-            int m = bytes[offset];
+            int m = bytes[offset] & 0xff;
             int i = 0;
             do {
-                m = (bytes[offset]);
+                m = (bytes[offset] & 0xff);
                 id = (int) (id + ((m & 0x7f) * Math.pow(2, (7 * i))));
                 offset++;
                 i++;
@@ -56,12 +60,12 @@ public class PomeloMessage {
         // parse route
         if (msgHasRoute(type)) {
             if (compressRoute != 0) {
-                int _route = (bytes[offset++]) << 8 | bytes[offset++];
+                int _route = ((bytes[offset++] & 0xff) << 8) | (bytes[offset++] & 0xff);
                 route = _route + "";
             } else {
                 int routeLen = bytes[offset++];
                 if (routeLen > 0) {
-                    int[] _route = new int[routeLen];
+                    byte[] _route = new byte[routeLen];
                     copyArray(_route, 0, bytes, offset, routeLen);
                     route = PomeloPackage.strdecode(_route);
                 } else {
@@ -73,22 +77,22 @@ public class PomeloMessage {
 
         // parse body
         int bodyLen = bytesLen - offset;
-        int[] body = new int[bodyLen];
+        byte[] body = new byte[bodyLen];
 
         copyArray(body, 0, bytes, offset, bodyLen);
         return new Message(id, type, compressRoute, route, body);
     }
 
-    public static int[] encode(int id, int type, int compressRoute, String route, int[] msg) throws PomeloException {
+    public static byte[] encode(int id, int type, int compressRoute, String route, byte[] msg) throws PomeloException {
         // caculate message max length
         int idBytes = msgHasId(type) ? caculateMsgIdBytes(id) : 0;
         int msgLen = MSG_FLAG_BYTES + idBytes;
-        int[] _route = null;
+        byte[] _route = null;
         if (msgHasRoute(type)) {
             if (compressRoute != 0) {
-                _route = new int[1];
+                _route = new byte[1];
                 try {
-                    _route[0] = Integer.parseInt(route);
+                    _route[0] = (byte) Integer.parseInt(route);
                 } catch (NumberFormatException e) {
                     throw new PomeloException("route format is not number", e);
                 }
@@ -109,7 +113,7 @@ public class PomeloMessage {
             msgLen += msg.length;
         }
 
-        int[] buffer = new int[msgLen];
+        byte[] buffer = new byte[msgLen];
         int offset = 0;
 
         // add flag
@@ -151,30 +155,30 @@ public class PomeloMessage {
         return len;
     }
 
-    public static int encodeMsgFlag(int type, int compressRoute, int[] buffer, int offset) throws PomeloException {
+    public static int encodeMsgFlag(int type, int compressRoute, byte[] buffer, int offset) throws PomeloException {
         if (type != TYPE_REQUEST && type != TYPE_NOTIFY &&
                 type != TYPE_RESPONSE && type != TYPE_PUSH) {
             throw new PomeloException("unkonw message type: " + type);
         }
-        buffer[offset] = (type << 1) | (compressRoute != 0 ? 1 : 0);
+        buffer[offset] = (byte) ((type << 1) | (compressRoute != 0 ? 1 : 0));
         return offset + MSG_FLAG_BYTES;
     }
 
-    public static int encodeMsgId(int id, int[] buffer, int offset) {
+    public static int encodeMsgId(int id, byte[] buffer, int offset) {
         do {
             int tmp = id % 128;
             int next = (int) Math.floor(id / 128);
             if (next != 0) {
                 tmp = tmp + 128;
             }
-            buffer[offset++] = tmp;
+            buffer[offset++] = (byte) tmp;
             id = next;
         } while (id != 0);
         return offset;
     }
 
 
-    public static int encodeMsgRoute(int compressRoute, int[] route, int[] buffer, int offset) throws PomeloException {
+    public static int encodeMsgRoute(int compressRoute, byte[] route, byte[] buffer, int offset) throws PomeloException {
         if (compressRoute != 0) {
             if (route.length != 1) {
                 throw new PomeloException("route size is overflow");
@@ -184,11 +188,11 @@ public class PomeloMessage {
                 throw new PomeloException("route number is overflow");
             }
 
-            buffer[offset++] = (_route >> 8) & 0xff;
-            buffer[offset++] = _route & 0xff;
+            buffer[offset++] = (byte) (_route >> 8);
+            buffer[offset++] = (byte) _route;
         } else {
             if (route != null) {
-                buffer[offset++] = route.length & 0xff;
+                buffer[offset++] = (byte) route.length;
                 copyArray(buffer, offset, route, 0, route.length);
                 offset += route.length;
             } else {
@@ -198,12 +202,18 @@ public class PomeloMessage {
         return offset;
     }
 
-    public static int encodeMsgBody(int[] msg, int[] buffer, int offset) {
+    public static int encodeMsgBody(byte[] msg, byte[] buffer, int offset) {
         copyArray(buffer, offset, msg, 0, msg.length);
         return offset + msg.length;
     }
 
     public static void copyArray(int[] dest, int doffset, int[] src, int soffset, int length) {
+        for (int index = 0; index < length; index++) {
+            dest[doffset++] = src[soffset++];
+        }
+    }
+
+    public static void copyArray(byte[] dest, int doffset, byte[] src, int soffset, int length) {
         for (int index = 0; index < length; index++) {
             dest[doffset++] = src[soffset++];
         }
@@ -215,7 +225,9 @@ public class PomeloMessage {
         int type;
         int compressRoute;
         String route;
-        int[] body;
+        byte[] body;
+        JSONObject bodyJson;
+
 
         public int getId() {
             return id;
@@ -249,15 +261,23 @@ public class PomeloMessage {
             this.route = route;
         }
 
-        public int[] getBody() {
+        public byte[] getBody() {
             return body;
         }
 
-        public void setBody(int[] body) {
+        public void setBody(byte[] body) {
             this.body = body;
         }
 
-        public Message(int id, int type, int compressRoute, String route, int[] body) {
+        public JSONObject getBodyJson() {
+            return bodyJson;
+        }
+
+        public void setBodyJson(JSONObject bodyJson) {
+            this.bodyJson = bodyJson;
+        }
+
+        public Message(int id, int type, int compressRoute, String route, byte[] body) {
             this.id = id;
             this.type = type;
             this.compressRoute = compressRoute;
@@ -267,7 +287,7 @@ public class PomeloMessage {
 
         @Override
         public String toString() {
-            return "{id:" + id + ",type:" + type + ",compressReoute:" + compressRoute + ",route:" + route + ",body:" + Arrays.toString(body) + "}";
+            return "{id:" + id + ",type:" + type + ",compressReoute:" + compressRoute + ",route:" + route + ",body:" + Arrays.toString(body) + ",body str:" + ((bodyJson != null) ? bodyJson.toString() : "") + "}";
         }
     }
 

@@ -21,6 +21,9 @@ public class Decoder {
 
     private ByteBuffer buffer;
 
+    public Decoder() {
+    }
+
     public Decoder(JSONObject protos) {
         this.protos = protos;
     }

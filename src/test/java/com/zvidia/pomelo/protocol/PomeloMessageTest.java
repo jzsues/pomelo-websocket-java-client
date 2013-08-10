@@ -27,7 +27,7 @@ public class PomeloMessageTest {
         try {
             System.out.println("----begin-----");
             System.out.println("encode msg str:" + msg);
-            int[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
+            byte[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
             System.out.println("encode:" + Arrays.toString(encode));
             PomeloMessage.Message decode = PomeloMessage.decode(encode);
             System.out.println("decode:" + decode);
@@ -47,7 +47,7 @@ public class PomeloMessageTest {
         try {
             System.out.println("----begin-----");
             System.out.println("encode msg str:" + msg);
-            int[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
+            byte[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
             System.out.println("encode:" + Arrays.toString(encode));
             PomeloMessage.Message decode = PomeloMessage.decode(encode);
             System.out.println("decode:" + decode);
@@ -68,7 +68,7 @@ public class PomeloMessageTest {
         try {
             System.out.println("----begin-----");
             System.out.println("encode msg str:" + msg);
-            int[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
+            byte[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
             System.out.println("encode:" + Arrays.toString(encode));
             PomeloMessage.Message decode = PomeloMessage.decode(encode);
             System.out.println("decode:" + decode);
@@ -89,7 +89,7 @@ public class PomeloMessageTest {
         try {
             System.out.println("----begin-----");
             System.out.println("encode msg str:" + msg);
-            int[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
+            byte[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
             System.out.println("encode:" + Arrays.toString(encode));
             PomeloMessage.Message decode = PomeloMessage.decode(encode);
             System.out.println("decode:" + decode);
@@ -110,7 +110,7 @@ public class PomeloMessageTest {
         try {
             System.out.println("----begin-----");
             System.out.println("encode msg str:" + msg);
-            int[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
+            byte[] encode = PomeloMessage.encode(id, PomeloMessage.TYPE_REQUEST, compress, route, PomeloPackage.strencode(msg));
             System.out.println("encode:" + Arrays.toString(encode));
             PomeloMessage.Message decode = PomeloMessage.decode(encode);
             System.out.println("decode:" + decode);

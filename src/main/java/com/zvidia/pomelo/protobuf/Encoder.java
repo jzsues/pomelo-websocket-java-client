@@ -22,8 +22,10 @@ import java.util.Set;
  */
 public class Encoder {
 
-
     private JSONObject protos;
+
+    public Encoder() {
+    }
 
     public Encoder(JSONObject protos) {
         this.protos = protos;
