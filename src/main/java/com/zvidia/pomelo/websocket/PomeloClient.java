@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +35,9 @@ public class PomeloClient extends WebSocketClient {
 
     private JSONObject abbrs;
 
-    private JSONObject routeMap;
+    private Map<Integer, String> routeMap = new HashMap<Integer, String>();
+
+    private Map<Integer, OnDataHandler> onDataHandlerMap = new HashMap<Integer, OnDataHandler>();
 
     private JSONObject clientProtos;
 
@@ -45,6 +48,8 @@ public class PomeloClient extends WebSocketClient {
     private ProtoBuf protoBuf;
 
     private int reqIdIndex = 0;
+
+    private boolean isConnected;
 
 
     public PomeloClient(URI serverURI) {
@@ -66,7 +71,12 @@ public class PomeloClient extends WebSocketClient {
 
     @Override
     public void close() {
+        isConnected = false;
         super.close();
+    }
+
+    public boolean isConnected() {
+        return isConnected;
     }
 
     @Override
@@ -122,10 +132,11 @@ public class PomeloClient extends WebSocketClient {
         }
     }
 
-    public void request(String route, String msg) throws PomeloException {
+    public void request(String route, String msg, OnDataHandler onDataHandler) throws PomeloException {
         reqIdIndex++;
         sendMessage(reqIdIndex, route, msg);
-        routeMap.put(reqIdIndex + "", route);
+        routeMap.put(reqIdIndex, route);
+        onDataHandlerMap.put(reqIdIndex, onDataHandler);
     }
 
     public void sendMessage(int reqId, String route, String msg) throws PomeloException {
@@ -146,15 +157,20 @@ public class PomeloClient extends WebSocketClient {
 
     private void onData(PomeloPackage.Package decode) throws PomeloException {
         PomeloMessage.Message message = defaultDecode(decode.getBody());
-        System.out.println("onData msg :" + message.toString());
+        int id = message.getId();
+        OnDataHandler onDataHandler = onDataHandlerMap.get(id);
+        onDataHandler.onData(message);
+        onDataHandlerMap.remove(id);
+        routeMap.remove(id);
+        //System.out.println("onData msg :" + message.toString());
     }
 
     private PomeloMessage.Message defaultDecode(byte[] buffer) throws PomeloException {
         PomeloMessage.Message msg = PomeloMessage.decode(buffer);
         if (msg.getId() > 0) {
             int id = msg.getId();
-            if (routeMap != null && routeMap.has(id + "")) {
-                msg.setRoute(routeMap.getString(id + ""));
+            if (routeMap != null && routeMap.containsKey(id)) {
+                msg.setRoute(routeMap.get(id));
                 if (msg.getRoute() == null) {
                     throw new PomeloException("msg route can not be null");
                 }
@@ -176,7 +192,7 @@ public class PomeloClient extends WebSocketClient {
         }
         int compressRoute = 0;
         if (dict != null && dict.has(route)) {
-            route = dict.getString(route);
+            route = dict.get(route).toString();
             compressRoute = 1;
         }
         return PomeloMessage.encode(reqId, type, compressRoute, route, encode);
@@ -227,6 +243,7 @@ public class PomeloClient extends WebSocketClient {
         //send ack msg
         byte[] ackBytes = PomeloPackage.encode(PomeloPackage.TYPE_HANDSHAKE_ACK, null);
         send(ackBytes);
+        isConnected = true;
     }
 
     private void handshakeInit(JSONObject data) {
@@ -259,7 +276,7 @@ public class PomeloClient extends WebSocketClient {
             abbrs = new JSONObject();
             Set<String> routes = dict.keySet();
             for (String route : routes) {
-                String key = dict.getString(route);
+                String key = dict.get(route).toString();
                 abbrs.put(key, route);
             }
         }
