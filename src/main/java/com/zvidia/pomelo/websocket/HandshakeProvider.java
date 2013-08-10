@@ -17,7 +17,16 @@ public class HandshakeProvider {
     public static final String HANDSHAKE_SYS_KEY = "sys";
     public static final String HANDSHAKE_SYS_TYPE_KEY = "type";
     public static final String HANDSHAKE_SYS_VERSION_KEY = "version";
+    public static final String HANDSHAKE_SYS_HEARTBEAT_KEY = "heartbeat";
+    public static final String HANDSHAKE_SYS_DICT_KEY = "dict";
+    public static final String HANDSHAKE_SYS_PROTOS_KEY = "protos";
+    public static final String HANDSHAKE_SYS_PROTOS_VERSION_KEY = "version";
+    public static final String HANDSHAKE_SYS_PROTOS_SERVER_KEY = "server";
+    public static final String HANDSHAKE_SYS_PROTOS_CLIENT_KEY = "client";
+
     public static final String HANDSHAKE_USER_KEY = "user";
+
+    public static final String RES_CODE_KEY = "code";
 
     public static final int RES_OK = 200;
     public static final int RES_FAIL = 500;

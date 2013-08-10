@@ -1,0 +1,17 @@
+{"maze_data": {
+    "message Maze": {
+        "required uInt32 x": 1,
+        "required uInt32 y": 2,
+        "required uInt32 walls": 3,
+        "required uInt32 idx": 4,
+        "required uInt32 goal": 5,
+        "required uInt32 carveSide": 6
+    },
+    "repeated Maze maze": 1,
+    "message Answer": {
+        "required uInt32 x": 1,
+        "required uInt32 y": 2,
+        "required uInt32 walls": 3
+    },
+    "repeated Answer answer": 2
+}}

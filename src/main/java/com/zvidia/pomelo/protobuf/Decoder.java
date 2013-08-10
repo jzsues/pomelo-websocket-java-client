@@ -25,6 +25,14 @@ public class Decoder {
         this.protos = protos;
     }
 
+    public JSONObject getProtos() {
+        return protos;
+    }
+
+    public void setProtos(JSONObject protos) {
+        this.protos = protos;
+    }
+
     public String decode(String proto, byte[] bytes) throws PomeloException {
         if (StringUtils.isEmpty(proto) || bytes == null) {
             throw new PomeloException("Route or msg can not be null, proto : " + proto);
@@ -41,7 +49,7 @@ public class Decoder {
 
     private JSONObject decodeMsg(JSONObject msg, JSONObject proto, int length) {
         while (offset < length) {
-            JSONObject head = getHead();
+            JSONObject head = getByteHead();
             JSONObject tags = proto.getJSONObject(ProtoBufParser.TAGS_KEY);
             int tag = head.getInt(ProtoBufParser.TAG_KEY);
             int type = head.getInt(ProtoBufParser.TYPE_KEY);
@@ -77,7 +85,16 @@ public class Decoder {
         return tags.isNull(tag + "");
     }
 
-    private JSONObject getHead() {
+    private JSONObject getByteHead() {
+        byte bytes = getByte();
+        int tag = bytes & 0xff;
+        JSONObject obj = new JSONObject();
+        obj.put(ProtoBufParser.TYPE_KEY, tag & 0x7);
+        obj.put(ProtoBufParser.TAG_KEY, tag >> 3);
+        return obj;
+    }
+
+    private JSONObject getBytesHead() {
         byte[] bytes = getBytes(false);
         int tag = Codec.decodeUInt32(bytes);
         JSONObject obj = new JSONObject();
@@ -99,11 +116,11 @@ public class Decoder {
         WireType _type = WireType.valueOfType("_" + type);
         switch (_type) {
             case _uInt32: {
-                return Codec.decodeUInt32(getBytes(false));
+                return getByte() & 0xff;
             }
             case _int32:
             case _sInt32: {
-                return Codec.decodeSInt32(getBytes(false));
+                return getByte() & 0xff;
             }
             case _float: {
                 float aFloat = buffer.getFloat(offset);
@@ -116,7 +133,8 @@ public class Decoder {
                 return aDouble;
             }
             case _string: {
-                int length = Codec.decodeUInt32(getBytes(false));
+                //int length = Codec.decodeUInt32(getBytes(false));
+                int length = getByte() & 0xff;
                 byte[] _bytes = new byte[length];
                 buffer.get(_bytes, 0, length);
                 offset += length;
@@ -127,7 +145,8 @@ public class Decoder {
                 JSONObject messages = aNull ? new JSONObject() : proto.getJSONObject(ProtoBufParser.MESSAGES_KEY);
                 if (!messages.isNull(type)) {
                     JSONObject _proto = messages.getJSONObject(type);
-                    int length = (int) Codec.decodeUInt32(getBytes(false));
+                    //int length = (int) Codec.decodeUInt32(getBytes(false));
+                    int length = getByte() & 0xff;
                     JSONObject msg = new JSONObject();
                     decodeMsg(msg, _proto, offset + length);
                     return msg;
@@ -142,7 +161,8 @@ public class Decoder {
         WireType _type = WireType.valueOfType(type);
         if (_type != WireType._string && _type != WireType._message) {
             //simple type
-            int length = (int) Codec.decodeUInt32(getBytes(false));
+            //int length = (int) Codec.decodeUInt32(getBytes(false));
+            int length = getByte() & 0xff;
             for (int i = 0; i < length; i++) {
                 Object obj = decodeProp(type, proto);
                 array.put(obj);
@@ -151,6 +171,12 @@ public class Decoder {
             Object obj = decodeProp(type, proto);
             array.put(obj);
         }
+    }
+
+    private byte getByte() {
+        byte b = buffer.get();
+        offset++;
+        return b;
     }
 
     private byte[] getBytes(boolean flag) {

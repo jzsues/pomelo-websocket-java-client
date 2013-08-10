@@ -124,7 +124,7 @@ public class PomeloPackage {
         byte v2 = bytes[index++];
         byte v3 = bytes[index++];
         int length = (v1 << 16) | (v2 << 8) | (v3 >>> 0) & 0xff;
-        int[] body = length > 0 ? new int[length] : null;
+        int[] body = length > 0 ? new int[length] : new int[0];
         for (int i = 0; i < body.length; i++) {
             body[i] = bytes[PKG_HEAD_BYTES + i] & 0xff;
         }
