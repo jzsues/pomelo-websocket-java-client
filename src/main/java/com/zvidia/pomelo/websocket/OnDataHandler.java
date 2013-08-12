@@ -1,6 +1,9 @@
 package com.zvidia.pomelo.websocket;
 
 import com.zvidia.pomelo.protocol.PomeloMessage;
+import org.json.JSONException;
+
+import java.net.URISyntaxException;
 
 /**
  * Created with IntelliJ IDEA.

@@ -1,7 +1,6 @@
 package com.zvidia.pomelo.websocket;
 
 import com.zvidia.pomelo.exception.PomeloException;
-import com.zvidia.pomelo.protobuf.Encoder;
 import com.zvidia.pomelo.protobuf.ProtoBuf;
 import com.zvidia.pomelo.protocol.PomeloMessage;
 import com.zvidia.pomelo.protocol.PomeloPackage;
@@ -23,6 +22,10 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PomeloClient extends WebSocketClient {
+    public static final String HANDSHAKE_RES_HOST_KEY = "host";
+    public static final String HANDSHAKE_RES_PORT_KEY = "port";
+    public static final String HANDSHAKE_RES_CODE_KEY = "code";
+
     private long heartbeatInterval = 0;
     private long heartbeatTimeout = 0;
     private long nextHeartbeatTimeout = 0;
@@ -49,7 +52,7 @@ public class PomeloClient extends WebSocketClient {
 
     private boolean isConnected;
 
-    private OnConnectHandler onConnectHandler;
+    private OnHandshakeSuccessHandler onHandshakeSuccessHandler;
     private OnErrorHandler onErrorHandler;
     private OnCloseHandler onCloseHandler;
     private OnKickHandler onKickHandler;
@@ -172,9 +175,13 @@ public class PomeloClient extends WebSocketClient {
         PomeloMessage.Message message = defaultDecode(decode.getBody());
         int id = message.getId();
         OnDataHandler onDataHandler = onDataHandlerMap.get(id);
-        onDataHandler.onData(message);
-        onDataHandlerMap.remove(id);
-        routeMap.remove(id);
+        if (onDataHandler != null) {
+            onDataHandler.onData(message);
+        } else {
+            System.out.println("can not find onDataHander for msg:" + message.toString());
+        }
+        //onDataHandlerMap.remove(id);
+        //routeMap.remove(id);
         //System.out.println("onData msg :" + message.toString());
     }
 
@@ -218,10 +225,10 @@ public class PomeloClient extends WebSocketClient {
             if (abbrs.isNull(route)) {
                 return new JSONObject();
             }
+            boolean hasRoute = abbrs.has(route);
+            route = hasRoute ? abbrs.getString(route) : null;
+            msg.setRoute(route);
         }
-        boolean hasRoute = abbrs.has(route);
-        route = hasRoute ? abbrs.getString(route) : null;
-        msg.setRoute(route);
         if (serverProtos != null && serverProtos.has(route)) {
             String decode = protoBuf.decode(route, msg.getBody());
             return new JSONObject(decode);
@@ -260,8 +267,8 @@ public class PomeloClient extends WebSocketClient {
         byte[] ackBytes = PomeloPackage.encode(PomeloPackage.TYPE_HANDSHAKE_ACK, null);
         send(ackBytes);
         isConnected = true;
-        if (onConnectHandler != null) {
-            onConnectHandler.onConnect(data);
+        if (onHandshakeSuccessHandler != null) {
+            onHandshakeSuccessHandler.onSuccess(this, data);
         }
     }
 
@@ -339,12 +346,12 @@ public class PomeloClient extends WebSocketClient {
         this.onErrorHandler = onErrorHandler;
     }
 
-    public OnConnectHandler getOnConnectHandler() {
-        return onConnectHandler;
+    public OnHandshakeSuccessHandler getOnHandshakeSuccessHandler() {
+        return onHandshakeSuccessHandler;
     }
 
-    public void setOnConnectHandler(OnConnectHandler onConnectHandler) {
-        this.onConnectHandler = onConnectHandler;
+    public void setOnHandshakeSuccessHandler(OnHandshakeSuccessHandler onHandshakeSuccessHandler) {
+        this.onHandshakeSuccessHandler = onHandshakeSuccessHandler;
     }
 
     public OnCloseHandler getOnCloseHandler() {

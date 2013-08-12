@@ -4,7 +4,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -15,7 +14,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ProtoBufParser {
-    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     public static final String MESSAGES_KEY = "__messages";
     public static final String TAGS_KEY = "__tags";
     public static final String OPTION_KEY = "option";

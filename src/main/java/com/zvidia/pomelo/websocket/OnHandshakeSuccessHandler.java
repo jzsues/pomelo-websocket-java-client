@@ -9,7 +9,7 @@ import org.json.JSONObject;
  * Time: 下午7:00
  * To change this template use File | Settings | File Templates.
  */
-public interface OnConnectHandler {
-    public void onConnect(JSONObject resp);
+public interface OnHandshakeSuccessHandler {
+    public void onSuccess(PomeloClient client, JSONObject resp);
 
 }
