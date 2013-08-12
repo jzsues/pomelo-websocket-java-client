@@ -1,6 +1,7 @@
 package com.zvidia.pomelo.protobuf;
 
 import com.zvidia.pomelo.exception.PomeloException;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -36,20 +37,20 @@ public class ProtoBuf {
         }
     }
 
-    public byte[] encode(String proto, String msg) throws PomeloException {
+    public byte[] encode(String proto, String msg) throws PomeloException, JSONException {
         return this.encoder.encode(proto, msg);
     }
 
-    public String encodeBase64(String proto, String msg) throws PomeloException {
+    public String encodeBase64(String proto, String msg) throws PomeloException, JSONException {
         byte[] bytes = this.encoder.encode(proto, msg);
         return new String(bytes);
     }
 
-    public String decode(String proto, byte[] bytes) throws PomeloException {
+    public String decode(String proto, byte[] bytes) throws PomeloException, JSONException {
         return this.decoder.decode(proto, bytes);
     }
 
-    public String decodeBase64(String proto, String str) throws PomeloException {
+    public String decodeBase64(String proto, String str) throws PomeloException, JSONException {
         return this.decoder.decode(proto, str.getBytes());
     }
 }

@@ -11,6 +11,7 @@ import org.omg.CORBA.PRIVATE_MEMBER;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -39,7 +40,7 @@ public class Encoder {
         this.protos = protos;
     }
 
-    public byte[] encode(String proto, String msg) throws PomeloException {
+    public byte[] encode(String proto, String msg) throws PomeloException, JSONException {
         if (StringUtils.isEmpty(proto) || StringUtils.isEmpty(msg)) {
             throw new PomeloException("Route or msg can not be null : " + msg + ", proto : " + proto);
         }
@@ -69,12 +70,13 @@ public class Encoder {
         return null;
     }
 
-    private boolean checkMsg(JSONObject msg, JSONObject proto) throws PomeloException {
+    private boolean checkMsg(JSONObject msg, JSONObject proto) throws PomeloException, JSONException {
         if (msg == null || proto == null) {
             throw new PomeloException("check msg failed! msg : " + msg + ", proto : " + proto);
         }
-        Set<String> names = proto.keySet();
-        for (String name : names) {
+        Iterator<String> names = proto.keys();
+        while (names.hasNext()) {
+            String name = names.next();
             JSONObject value = proto.getJSONObject(name);
             if (!value.isNull(ProtoBufParser.OPTION_KEY)) {
                 String option = value.getString(ProtoBufParser.OPTION_KEY);
@@ -117,9 +119,10 @@ public class Encoder {
         return true;
     }
 
-    private int encodeMsg(ByteBuffer buffer, int offset, JSONObject proto, JSONObject msg) {
-        Set<String> names = msg.keySet();
-        for (String name : names) {
+    private int encodeMsg(ByteBuffer buffer, int offset, JSONObject proto, JSONObject msg) throws JSONException {
+        Iterator<String> names = msg.keys();
+        while (names.hasNext()) {
+            String name = names.next();
             Object value = msg.get(name);
             JSONObject _proto = proto.getJSONObject(name);
             String option = _proto.getString(ProtoBufParser.OPTION_KEY);
@@ -148,7 +151,7 @@ public class Encoder {
         return offset;
     }
 
-    private int encodeArray(JSONArray array, JSONObject _proto, int offset, ByteBuffer buffer, JSONObject proto) {
+    private int encodeArray(JSONArray array, JSONObject _proto, int offset, ByteBuffer buffer, JSONObject proto) throws JSONException {
         String type = _proto.getString(ProtoBufParser.TYPE_KEY);
         int tag = _proto.getInt(ProtoBufParser.TAG_KEY);
         WireType _type = WireType.valueOfType(type);
@@ -175,7 +178,7 @@ public class Encoder {
         return offset;
     }
 
-    private int encodeProp(Object value, String type, int offset, ByteBuffer buffer, JSONObject proto) {
+    private int encodeProp(Object value, String type, int offset, ByteBuffer buffer, JSONObject proto) throws JSONException {
         WireType _type = WireType.valueOfType("_" + type);
         switch (_type) {
             case _uInt32: {

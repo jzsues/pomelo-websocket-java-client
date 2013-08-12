@@ -1,5 +1,6 @@
 package com.zvidia.pomelo.websocket;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -32,7 +33,7 @@ public class HandshakeProvider {
     public static final int RES_FAIL = 500;
     public static final int RES_OLD_CLIENT = 501;
 
-    public static JSONObject handshakeObject() {
+    public static JSONObject handshakeObject() throws JSONException {
         JSONObject handshake = new JSONObject();
         JSONObject sys = new JSONObject();
         sys.put(HANDSHAKE_SYS_TYPE_KEY, JS_WS_CLIENT_TYPE);

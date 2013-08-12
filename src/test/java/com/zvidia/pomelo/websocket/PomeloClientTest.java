@@ -2,6 +2,7 @@ package com.zvidia.pomelo.websocket;
 
 import com.zvidia.pomelo.exception.PomeloException;
 import com.zvidia.pomelo.protocol.PomeloMessage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -59,35 +60,52 @@ public class PomeloClientTest {
         assertTrue(message + "failed with exception(s)" + exceptions, exceptions.isEmpty());
     }
 
+    boolean flag = false;
+
     @Test
     public void testConnect() throws InterruptedException {
         try {
-            PomeloClient client = new PomeloClient(new URI("ws://localhost:3014"));
+            final PomeloClient client = new PomeloClient(new URI("ws://localhost:3014"));
 //            List<Runnable> runs = new ArrayList<Runnable>();
 //            runs.add(client);
 //            PomeloClientTest.assertConcurrent("test websocket client", runs, 200);
-            client.connect();
-            int i = 0;
-            while (i < 10) {
-                try {
-                    boolean connected = client.isConnected();
-                    if (connected) {
+            OnConnectHandler onConnectHandler = new OnConnectHandler() {
+                @Override
+                public void onConnect(JSONObject resp) {
+                    try {
                         JSONObject json = new JSONObject();
                         json.put("uid", 1);
                         client.request("gate.gateHandler.queryEntry", json.toString(), new OnDataHandler() {
                             @Override
                             public void onData(PomeloMessage.Message message) {
                                 System.out.println(message.toString());
+                                client.close();
+                                flag = true;
                             }
                         });
+                    } catch (PomeloException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        flag = true;
+                    } catch (JSONException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        flag = true;
                     }
-                } catch (PomeloException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
-                i++;
+            };
+            OnErrorHandler onErrorHandler = new OnErrorHandler() {
+                @Override
+                public void onError(Exception e) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                    e.printStackTrace();
+                    flag = true;
+                }
+            };
+            client.setOnConnectHandler(onConnectHandler);
+            client.setOnErrorHandler(onErrorHandler);
+            client.connect();
+            while (!flag) {
                 Thread.sleep(100);
             }
-            client.close();
         } catch (URISyntaxException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

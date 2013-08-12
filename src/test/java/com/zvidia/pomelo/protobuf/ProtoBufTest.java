@@ -7,6 +7,7 @@ import com.zvidia.pomelo.protobuf.ProtoBuf;
 import com.zvidia.pomelo.protobuf.ProtoBufParser;
 import com.zvidia.pomelo.utils.GzipUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -27,7 +29,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class ProtoBufTest {
-    int rTimes = 10000;
+    int rTimes = 100;
 
     @Test
     public void testGzip() throws IOException {
@@ -50,7 +52,7 @@ public class ProtoBufTest {
     }
 
     @Test
-    public void testEncode() throws IOException {
+    public void testEncode() throws IOException, JSONException {
         byte[] msgBytes = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\maze_data_1k.json"));
         String msgJsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(msgBytes)).toString();
         JSONObject msgs = new JSONObject(msgJsonStr);
@@ -61,27 +63,28 @@ public class ProtoBufTest {
         Encoder encoder = new Encoder(proto);
         Decoder decoder = new Decoder(proto);
         ProtoBuf protoBuf = new ProtoBuf(encoder, decoder);
-        Set<String> routes = msgs.keySet();
+        Iterator<String> routes = msgs.keys();
         long encode_cost = 0L;
         long decode_cost = 0L;
         long all_cost = 0L;
         for (int i = 0; i < rTimes; i++) {
-            for (String route : routes) {
+            while (routes.hasNext()) {
+                String route = routes.next();
                 long start = new Date().getTime();
                 JSONObject msg = msgs.getJSONObject(route);
                 try {
                     String msgStr = msg.toString();
-//                    System.out.println("encode route " + route + ":" + msgStr);
+                    System.out.println("encode route " + route + ":" + msgStr);
                     byte[] encode = protoBuf.encode(route, msgStr);
                     long encode_end = new Date().getTime();
                     encode_cost += (encode_end - start);
-//                    System.out.println(Arrays.toString(encode));
+                    System.out.println(Arrays.toString(encode));
                     String decode = protoBuf.decode(route, encode);
                     long decode_end = new Date().getTime();
                     decode_cost += (decode_end - encode_end);
                     all_cost += (decode_end - start);
-                    //org.junit.Assert.assertEquals("assert result", msgStr, decode);
-//                    System.out.println("decode:" + decode);
+                    org.junit.Assert.assertEquals("assert result", msgStr, decode);
+                    System.out.println("decode:" + decode);
                 } catch (PomeloException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }

@@ -8,14 +8,12 @@ import com.zvidia.pomelo.protocol.PomeloPackage;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -51,6 +49,11 @@ public class PomeloClient extends WebSocketClient {
 
     private boolean isConnected;
 
+    private OnConnectHandler onConnectHandler;
+    private OnErrorHandler onErrorHandler;
+    private OnCloseHandler onCloseHandler;
+    private OnKickHandler onKickHandler;
+
 
     public PomeloClient(URI serverURI) {
         super(serverURI);
@@ -64,7 +67,6 @@ public class PomeloClient extends WebSocketClient {
         super(serverUri, draft, headers, connecttimeout);
     }
 
-    @Override
     public void connect() {
         super.connect();
     }
@@ -85,10 +87,15 @@ public class PomeloClient extends WebSocketClient {
         if (protoBuf == null) {
             protoBuf = new ProtoBuf();
         }
-        JSONObject jsonObject = HandshakeProvider.handshakeObject();
-        byte[] strencode = PomeloPackage.strencode(jsonObject.toString());
-        byte[] encode = PomeloPackage.encode(PomeloPackage.TYPE_HANDSHAKE, strencode);
-        send(encode);
+        try {
+            JSONObject jsonObject = HandshakeProvider.handshakeObject();
+            byte[] strencode = PomeloPackage.strencode(jsonObject.toString());
+            byte[] encode = PomeloPackage.encode(PomeloPackage.TYPE_HANDSHAKE, strencode);
+            send(encode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -105,7 +112,11 @@ public class PomeloClient extends WebSocketClient {
         int type = decode.getType();
         switch (type) {
             case PomeloPackage.TYPE_HANDSHAKE: {
-                handshake(decode);
+                try {
+                    handshake(decode);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             case PomeloPackage.TYPE_HEARTBEAT: {
@@ -116,7 +127,9 @@ public class PomeloClient extends WebSocketClient {
                 try {
                     onData(decode);
                 } catch (PomeloException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
                 break;
             }
@@ -132,14 +145,14 @@ public class PomeloClient extends WebSocketClient {
         }
     }
 
-    public void request(String route, String msg, OnDataHandler onDataHandler) throws PomeloException {
+    public void request(String route, String msg, OnDataHandler onDataHandler) throws PomeloException, JSONException {
         reqIdIndex++;
         sendMessage(reqIdIndex, route, msg);
         routeMap.put(reqIdIndex, route);
         onDataHandlerMap.put(reqIdIndex, onDataHandler);
     }
 
-    public void sendMessage(int reqId, String route, String msg) throws PomeloException {
+    public void sendMessage(int reqId, String route, String msg) throws PomeloException, JSONException {
         byte[] bytes = defaultEncode(reqId, route, msg);
         byte[] encode = PomeloPackage.encode(PomeloPackage.TYPE_DATA, bytes);
         send(encode);
@@ -155,7 +168,7 @@ public class PomeloClient extends WebSocketClient {
         nextHeartbeatTimeout = new Date().getTime() + heartbeatTimeout;
     }
 
-    private void onData(PomeloPackage.Package decode) throws PomeloException {
+    private void onData(PomeloPackage.Package decode) throws PomeloException, JSONException {
         PomeloMessage.Message message = defaultDecode(decode.getBody());
         int id = message.getId();
         OnDataHandler onDataHandler = onDataHandlerMap.get(id);
@@ -165,7 +178,7 @@ public class PomeloClient extends WebSocketClient {
         //System.out.println("onData msg :" + message.toString());
     }
 
-    private PomeloMessage.Message defaultDecode(byte[] buffer) throws PomeloException {
+    private PomeloMessage.Message defaultDecode(byte[] buffer) throws PomeloException, JSONException {
         PomeloMessage.Message msg = PomeloMessage.decode(buffer);
         if (msg.getId() > 0) {
             int id = msg.getId();
@@ -181,7 +194,7 @@ public class PomeloClient extends WebSocketClient {
         return msg;
     }
 
-    private byte[] defaultEncode(int reqId, String route, String msg) throws PomeloException {
+    private byte[] defaultEncode(int reqId, String route, String msg) throws PomeloException, JSONException {
         int type = reqId > 0 ? PomeloMessage.TYPE_REQUEST : PomeloMessage.TYPE_NOTIFY;
         byte[] encode = null;
         //compress message by protobuf
@@ -198,7 +211,7 @@ public class PomeloClient extends WebSocketClient {
         return PomeloMessage.encode(reqId, type, compressRoute, route, encode);
     }
 
-    private JSONObject deCompose(PomeloMessage.Message msg) throws PomeloException {
+    private JSONObject deCompose(PomeloMessage.Message msg) throws PomeloException, JSONException {
         String route = msg.getRoute();
         int compressRoute = msg.getCompressRoute();
         if (compressRoute > 0) {
@@ -220,9 +233,12 @@ public class PomeloClient extends WebSocketClient {
 
     private void onKick(PomeloPackage.Package decode) {
         System.out.println("on kick");
+        if (onKickHandler != null) {
+            onKickHandler.onKick();
+        }
     }
 
-    private void handshake(PomeloPackage.Package decode) {
+    private void handshake(PomeloPackage.Package decode) throws JSONException {
         String resStr = PomeloPackage.strdecode(decode.getBody());
         System.out.println("handshake resStr: " + resStr);
         JSONObject data = new JSONObject(resStr);
@@ -244,9 +260,12 @@ public class PomeloClient extends WebSocketClient {
         byte[] ackBytes = PomeloPackage.encode(PomeloPackage.TYPE_HANDSHAKE_ACK, null);
         send(ackBytes);
         isConnected = true;
+        if (onConnectHandler != null) {
+            onConnectHandler.onConnect(data);
+        }
     }
 
-    private void handshakeInit(JSONObject data) {
+    private void handshakeInit(JSONObject data) throws JSONException {
         if (!data.isNull(HandshakeProvider.HANDSHAKE_SYS_KEY)) {
             JSONObject sys = data.getJSONObject(HandshakeProvider.HANDSHAKE_SYS_KEY);
             if (!sys.isNull(HandshakeProvider.HANDSHAKE_SYS_HEARTBEAT_KEY)) {
@@ -264,7 +283,7 @@ public class PomeloClient extends WebSocketClient {
         initData(data);
     }
 
-    private void initData(JSONObject data) {
+    private void initData(JSONObject data) throws JSONException {
         if (data == null || data.isNull(HandshakeProvider.HANDSHAKE_SYS_KEY)) {
             System.out.println("data format error!");
             return;
@@ -274,17 +293,18 @@ public class PomeloClient extends WebSocketClient {
             dict = sys.getJSONObject(HandshakeProvider.HANDSHAKE_SYS_DICT_KEY);
             System.out.println("sys.dict:" + dict.toString());
             abbrs = new JSONObject();
-            Set<String> routes = dict.keySet();
-            for (String route : routes) {
+            Iterator<String> routes = dict.keys();
+            while (routes.hasNext()) {
+                String route = routes.next();
                 String key = dict.get(route).toString();
                 abbrs.put(key, route);
             }
         }
         if (!sys.isNull(HandshakeProvider.HANDSHAKE_SYS_PROTOS_KEY)) {
             protos = sys.getJSONObject(HandshakeProvider.HANDSHAKE_SYS_PROTOS_KEY);
-            protosVersion = protos.getIntNullable(HandshakeProvider.HANDSHAKE_SYS_PROTOS_VERSION_KEY);
-            serverProtos = protos.getJSONObjectNullable(HandshakeProvider.HANDSHAKE_SYS_PROTOS_SERVER_KEY);
-            clientProtos = protos.getJSONObjectNullable(HandshakeProvider.HANDSHAKE_SYS_PROTOS_CLIENT_KEY);
+            protosVersion = protos.has(HandshakeProvider.HANDSHAKE_SYS_PROTOS_VERSION_KEY) ? protos.getInt(HandshakeProvider.HANDSHAKE_SYS_PROTOS_VERSION_KEY) : 0;
+            serverProtos = protos.has(HandshakeProvider.HANDSHAKE_SYS_PROTOS_SERVER_KEY) ? protos.getJSONObject(HandshakeProvider.HANDSHAKE_SYS_PROTOS_SERVER_KEY) : null;
+            clientProtos = protos.has(HandshakeProvider.HANDSHAKE_SYS_PROTOS_CLIENT_KEY) ? protos.getJSONObject(HandshakeProvider.HANDSHAKE_SYS_PROTOS_CLIENT_KEY) : null;
             System.out.println("sys.protos.version:" + protosVersion);
             System.out.println("sys.protos.server:" + serverProtos.toString());
             System.out.println("sys.protos.client:" + clientProtos.toString());
@@ -299,10 +319,47 @@ public class PomeloClient extends WebSocketClient {
     @Override
     public void onClose(int code, String msg, boolean remote) {
         System.out.println("Connection closed by " + (remote ? "remote peer" : "us"));
+        if (onCloseHandler != null) {
+            onCloseHandler.onClose(code, msg, remote);
+        }
     }
 
     @Override
     public void onError(Exception e) {
-        e.printStackTrace();
+        if (onErrorHandler != null) {
+            onErrorHandler.onError(e);
+        }
+    }
+
+    public OnErrorHandler getOnErrorHandler() {
+        return onErrorHandler;
+    }
+
+    public void setOnErrorHandler(OnErrorHandler onErrorHandler) {
+        this.onErrorHandler = onErrorHandler;
+    }
+
+    public OnConnectHandler getOnConnectHandler() {
+        return onConnectHandler;
+    }
+
+    public void setOnConnectHandler(OnConnectHandler onConnectHandler) {
+        this.onConnectHandler = onConnectHandler;
+    }
+
+    public OnCloseHandler getOnCloseHandler() {
+        return onCloseHandler;
+    }
+
+    public void setOnCloseHandler(OnCloseHandler onCloseHandler) {
+        this.onCloseHandler = onCloseHandler;
+    }
+
+    public OnKickHandler getOnKickHandler() {
+        return onKickHandler;
+    }
+
+    public void setOnKickHandler(OnKickHandler onKickHandler) {
+        this.onKickHandler = onKickHandler;
     }
 }

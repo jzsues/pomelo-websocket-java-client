@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.zvidia.game</groupId>
+    <groupId>com.zvidia</groupId>
     <artifactId>pomelo</artifactId>
     <version>1.0-SNAPSHOT</version>
     <dependencies>
@@ -13,6 +13,11 @@
             <artifactId>junit</artifactId>
             <version>4.8</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
         </dependency>
         <dependency>
             <groupId>org.java-websocket</groupId>
@@ -30,6 +35,22 @@
                     <source>1.6</source>
                     <target>1.6</target>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attached</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
                 </configuration>
             </plugin>
         </plugins>

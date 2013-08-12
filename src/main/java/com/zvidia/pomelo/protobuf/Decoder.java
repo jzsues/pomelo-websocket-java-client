@@ -3,6 +3,7 @@ package com.zvidia.pomelo.protobuf;
 import com.zvidia.pomelo.exception.PomeloException;
 import com.zvidia.pomelo.utils.StringUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ public class Decoder {
         this.protos = protos;
     }
 
-    public String decode(String proto, byte[] bytes) throws PomeloException {
+    public String decode(String proto, byte[] bytes) throws PomeloException, JSONException {
         if (StringUtils.isEmpty(proto) || bytes == null) {
             throw new PomeloException("Route or msg can not be null, proto : " + proto);
         }
@@ -50,7 +51,7 @@ public class Decoder {
         return null;
     }
 
-    private JSONObject decodeMsg(JSONObject msg, JSONObject proto, int length) {
+    private JSONObject decodeMsg(JSONObject msg, JSONObject proto, int length) throws JSONException {
         while (offset < length) {
             JSONObject head = getByteHead();
             JSONObject tags = proto.getJSONObject(ProtoBufParser.TAGS_KEY);
@@ -81,14 +82,14 @@ public class Decoder {
         return msg;
     }
 
-    private boolean isFinsh() {
+    private boolean isFinsh() throws JSONException {
         JSONObject tags = protos.getJSONObject(ProtoBufParser.TAGS_KEY);
         JSONObject head = peekHead();
         int tag = head.getInt(ProtoBufParser.TAG_KEY);
         return tags.isNull(tag + "");
     }
 
-    private JSONObject getByteHead() {
+    private JSONObject getByteHead() throws JSONException {
         byte bytes = getByte();
         int tag = bytes & 0xff;
         JSONObject obj = new JSONObject();
@@ -97,7 +98,7 @@ public class Decoder {
         return obj;
     }
 
-    private JSONObject getBytesHead() {
+    private JSONObject getBytesHead() throws JSONException {
         byte[] bytes = getBytes(false);
         int tag = Codec.decodeUInt32(bytes);
         JSONObject obj = new JSONObject();
@@ -106,7 +107,7 @@ public class Decoder {
         return obj;
     }
 
-    private JSONObject peekHead() {
+    private JSONObject peekHead() throws JSONException {
         byte[] bytes = peekBytes();
         int tag = (int) Codec.decodeUInt32(bytes);
         JSONObject obj = new JSONObject();
@@ -115,7 +116,7 @@ public class Decoder {
         return obj;
     }
 
-    private Object decodeProp(String type, JSONObject proto) {
+    private Object decodeProp(String type, JSONObject proto) throws JSONException {
         WireType _type = WireType.valueOfType("_" + type);
         switch (_type) {
             case _uInt32: {
@@ -160,7 +161,7 @@ public class Decoder {
         return null;
     }
 
-    private void decodeArray(JSONArray array, String type, JSONObject proto) {
+    private void decodeArray(JSONArray array, String type, JSONObject proto) throws JSONException {
         WireType _type = WireType.valueOfType(type);
         if (_type != WireType._string && _type != WireType._message) {
             //simple type

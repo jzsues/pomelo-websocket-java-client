@@ -1,5 +1,6 @@
 package com.zvidia.pomelo.protobuf;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
@@ -22,10 +23,11 @@ public class ProtoBufParser {
     public static final String TYPE_KEY = "type";
 
 
-    public static JSONObject parse(JSONObject proto) {
+    public static JSONObject parse(JSONObject proto) throws JSONException {
         JSONObject protos = new JSONObject();
-        Set<String> keys = proto.keySet();
-        for (String key : keys) {
+        Iterator<String> keys = proto.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
             JSONObject jsonObject = proto.getJSONObject(key);
             JSONObject object = parseObject(jsonObject);
             protos.put(key, object);
@@ -33,12 +35,13 @@ public class ProtoBufParser {
         return protos;
     }
 
-    public static JSONObject parseObject(JSONObject proto) {
+    public static JSONObject parseObject(JSONObject proto) throws JSONException {
         JSONObject protos = new JSONObject();
         JSONObject nestProtos = new JSONObject();
         JSONObject tags = new JSONObject();
-        Set<String> keys = proto.keySet();
-        for (String key : keys) {
+        Iterator<String> keys = proto.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
             Object tag = proto.get(key);
             String[] params = key.split(" ");
             String option = params[0];

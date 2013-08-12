@@ -25,7 +25,7 @@ public class ProtoBufParserTest {
     @Test
     public void testParse() {
         try {
-            byte[] encoded = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\game\\pomelo\\protobuf\\example.json"));
+            byte[] encoded = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\example.json"));
             String jsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(encoded)).toString();
             JSONObject json = new JSONObject(jsonStr);
             System.out.println(json.toString());
