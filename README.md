@@ -1,4 +1,4 @@
 pomelo-websocket-java-client
 ============================
 
-javaw websocket lib with protobuf implement for pomelo 
+java websocket client lib with protobuf implements for pomelo 
