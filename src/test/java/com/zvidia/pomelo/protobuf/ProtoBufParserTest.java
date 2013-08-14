@@ -4,6 +4,7 @@ import com.zvidia.pomelo.protobuf.ProtoBufParser;
 import org.json.JSONObject;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.StringReader;
@@ -25,7 +26,8 @@ public class ProtoBufParserTest {
     @Test
     public void testParse() {
         try {
-            byte[] encoded = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\example.json"));
+            String path = getClass().getResource("/").getPath();
+            byte[] encoded = Files.readAllBytes(Paths.get(path.substring(1) + "example.json"));
             String jsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(encoded)).toString();
             JSONObject json = new JSONObject(jsonStr);
             System.out.println(json.toString());

@@ -33,7 +33,8 @@ public class ProtoBufTest {
 
     @Test
     public void testGzip() throws IOException {
-        byte[] msgBytes = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\maze_data_1k.json"));
+        String path = getClass().getResource("/").getPath();
+        byte[] msgBytes = Files.readAllBytes(Paths.get(path.substring(1) + "maze_data_1k.json"));
         String msgJsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(msgBytes)).toString();
         long encode_cost = 0L;
         long decode_cost = 0L;
@@ -53,10 +54,11 @@ public class ProtoBufTest {
 
     @Test
     public void testEncode() throws IOException, JSONException {
-        byte[] msgBytes = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\maze_data_1k.json"));
+        String path = getClass().getResource("/").getPath();
+        byte[] msgBytes = Files.readAllBytes(Paths.get(path.substring(1) + "maze_data_1k.json"));
         String msgJsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(msgBytes)).toString();
         JSONObject msgs = new JSONObject(msgJsonStr);
-        byte[] protoBytes = Files.readAllBytes(Paths.get("D:\\work\\workspace_game\\pomelo_java\\src\\test\\java\\com\\zvidia\\pomelo\\protobuf\\maze_proto.json"));
+        byte[] protoBytes = Files.readAllBytes(Paths.get(path.substring(1) + "maze_proto.json"));
         String protoJsonStr = Charset.forName("UTF-8").decode(ByteBuffer.wrap(protoBytes)).toString();
         JSONObject _proto = new JSONObject(protoJsonStr);
         JSONObject proto = ProtoBufParser.parse(_proto);
