@@ -2,7 +2,6 @@ package com.zvidia.pomelo.protobuf;
 
 import com.zvidia.pomelo.exception.PomeloException;
 import com.zvidia.pomelo.utils.StringUtils;
-import com.zvidia.pomelo.exception.PomeloException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,7 +9,6 @@ import org.omg.CORBA.PRIVATE_MEMBER;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 
