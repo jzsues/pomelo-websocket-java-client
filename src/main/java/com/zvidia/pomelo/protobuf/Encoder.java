@@ -1,5 +1,6 @@
 package com.zvidia.pomelo.protobuf;
 
+import com.sun.org.apache.bcel.internal.classfile.Code;
 import com.zvidia.pomelo.exception.PomeloException;
 import com.zvidia.pomelo.utils.StringUtils;
 import org.json.JSONArray;
@@ -7,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.omg.CORBA.PRIVATE_MEMBER;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -54,15 +56,10 @@ public class Encoder {
             throw new PomeloException("check msg failed! msg : " + msg + ", proto : " + proto);
         }
 
-        int length = msg.getBytes().length * 2;
-
-        ByteBuffer buffer = ByteBuffer.allocate(length);
-        int offset = 0;
+        CodedOutputStream output = new CodedOutputStream();
         if (_proto != null) {
-            offset = encodeMsg(buffer, offset, _proto, _msg);
-            buffer.flip();
-            byte[] res = new byte[offset];
-            buffer.get(res, 0, offset);
+            encodeMsg(output, _proto, _msg);
+            byte[] res = output.toBytes();
             return res;
         }
         return null;
@@ -117,7 +114,7 @@ public class Encoder {
         return true;
     }
 
-    private int encodeMsg(ByteBuffer buffer, int offset, JSONObject proto, JSONObject msg) throws JSONException {
+    private void encodeMsg(CodedOutputStream output, JSONObject proto, JSONObject msg) throws JSONException {
         Iterator<String> names = msg.keys();
         while (names.hasNext()) {
             String name = names.next();
@@ -130,127 +127,92 @@ public class Encoder {
             switch (_option) {
                 case required:
                 case optional: {
-                    //offset = writeBytes(buffer, offset, encodeTag(type, tag));
-                    offset = writeByte(buffer, offset, encodeIntTag(type, tag));
-                    offset = encodeProp(value, type, offset, buffer, proto);
+                    output.writeInt32NoTag(encodeIntTag(type, tag));
+                    encodeProp(value, type, output, proto);
                     break;
                 }
                 case repeated: {
                     if (value != null) {
                         JSONArray array = (JSONArray) value;
                         if (array.length() > 0) {
-                            offset = encodeArray(array, _proto, offset, buffer, proto);
+                            encodeArray(array, _proto, output, proto);
                         }
                     }
                     break;
                 }
             }
         }
-        return offset;
     }
 
-    private int encodeArray(JSONArray array, JSONObject _proto, int offset, ByteBuffer buffer, JSONObject proto) throws JSONException {
+    private void encodeArray(JSONArray array, JSONObject _proto, CodedOutputStream output, JSONObject proto) throws JSONException {
         String type = _proto.getString(ProtoBufParser.TYPE_KEY);
         int tag = _proto.getInt(ProtoBufParser.TAG_KEY);
         WireType _type = WireType.valueOfType(type);
 
         if (_type != WireType._string && _type != WireType._message) {
             //simple type
-            //offset = writeBytes(buffer, offset, encodeTag(type, tag));
-            //offset = writeBytes(buffer, offset, Codec.encodeUInt32(array.length()));
-            offset = writeByte(buffer, offset, encodeIntTag(type, tag));
-            offset = writeByte(buffer, offset, array.length());
+            output.writeRawByte(encodeIntTag(type, tag));
+            output.writeInt32NoTag(array.length());
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                offset = encodeProp(obj, type, offset, buffer, proto);
+                encodeProp(obj, type, output, proto);
             }
         } else {
             //complex type
             for (int i = 0; i < array.length(); i++) {
-                //offset = writeBytes(buffer, offset, encodeTag(type, tag));
-                offset = writeByte(buffer, offset, encodeIntTag(type, tag));
+                output.writeRawByte(encodeIntTag(type, tag));
                 JSONObject obj = array.getJSONObject(i);
-                offset = encodeProp(obj, type, offset, buffer, proto);
+                encodeProp(obj, type, output, proto);
             }
         }
-        return offset;
     }
 
-    private int encodeProp(Object value, String type, int offset, ByteBuffer buffer, JSONObject proto) throws JSONException {
+    //所有涉及Codec.encode的都应该是variant length!!!
+    //http://www.cnblogs.com/shitouer/archive/2013/04/12/google-protocol-buffers-encoding.html
+    private void encodeProp(Object value, String type, CodedOutputStream output, JSONObject proto) throws JSONException {
         WireType _type = WireType.valueOfType("_" + type);
         switch (_type) {
             case _uInt32: {
                 int _value = Integer.parseInt(value.toString());
-                //offset = writeBytes(buffer, offset, Codec.encodeUInt32(_value));
-                // buffer.put((byte) _value);
-                offset = writeByte(buffer, offset, _value);
+                output.writeInt32NoTag(_value);
                 break;
             }
             case _int32:
             case _sInt32: {
                 int _value = Integer.parseInt(value.toString());
-                //offset = writeBytes(buffer, offset, Codec.encodeSInt32(_value));
-                offset = writeByte(buffer, offset, _value);
+                output.writeSInt32NoTag(_value);
                 break;
             }
             case _float: {
                 float _value = Float.parseFloat(value.toString());
-                buffer.putFloat(_value);
-                offset += 4;
+                output.writeFloatNoTag(_value);
                 break;
             }
             case _double: {
                 double _value = Double.parseDouble(value.toString());
-                buffer.putDouble(_value);
-                offset += 8;
+                output.writeDoubleNoTag(_value);
                 break;
             }
             case _string: {
                 String _value = value.toString();
                 byte[] bytes = _value.getBytes(ProtoBufParser.DEFAULT_CHARSET);
-                int length = bytes.length;
-                offset = writeBytes(buffer, offset, Codec.encodeUInt32(length));
-                offset = writeBytes(buffer, offset, bytes);
+                output.writeInt32NoTag(bytes.length);
+                output.writeRawBytes(bytes);
                 break;
             }
             default: {
                 boolean aNull = proto.isNull(ProtoBufParser.MESSAGES_KEY);
                 JSONObject messages = aNull ? new JSONObject() : proto.getJSONObject(ProtoBufParser.MESSAGES_KEY);
                 if (!messages.isNull(type)) {
-                    ByteBuffer tmpBuffer = ByteBuffer.allocate(value.toString().getBytes(ProtoBufParser.DEFAULT_CHARSET).length * 2);
-                    int length = encodeMsg(tmpBuffer, 0, messages.getJSONObject(type), (JSONObject) value);
-                    //offset = writeBytes(buffer, offset, Codec.encodeUInt32(length));
-                    offset = writeByte(buffer, offset, length);
-                    //contact the object
-                    buffer.put(tmpBuffer.array(), 0, length);
-                    offset += length;
+                    CodedOutputStream output2 = new CodedOutputStream();
+                    encodeMsg(output2, messages.getJSONObject(type), (JSONObject) value);
+                    byte[] buffer2 = output2.toBytes();
+                    output.writeInt32NoTag(buffer2.length);
+                    output.writeRawBytes(buffer2);
                 }
                 break;
             }
         }
-        return offset;
-    }
-
-    private int writeByte(ByteBuffer buffer, int offset, int b) {
-        buffer.put((byte) b);
-        return offset + 1;
-    }
-
-    private int writeBytes(ByteBuffer buffer, int offset, byte[] bytes) {
-        buffer.put(bytes, 0, bytes.length);
-        return offset + bytes.length;
-    }
-
-    /*
-    * int -> byte
-    * */
-    private byte[] encodeTag(String type, int tag) {
-        String _type = "_" + type;
-        WireType __type = WireType.valueOfType(_type);
-        int num = (tag << 3) | __type.getValue();
-        byte[] bytes = Codec.encodeUInt32(num);
-        return bytes;
-
     }
 
     /*

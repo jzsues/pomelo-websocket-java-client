@@ -107,7 +107,7 @@ public class PomeloPackage {
         buffer[index++] = (byte) ((length >> 8));
         buffer[index++] = (byte) (length);
         if (body != null) {
-            for (byte i = 0; i < body.length; i++) {
+            for (int i = 0; i < body.length; i++) {
                 buffer[PKG_HEAD_BYTES + i] = (byte) body[i];
             }
         }
