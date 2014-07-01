@@ -124,15 +124,15 @@ public class Decoder {
             }
             case _int32:
             case _sInt32: {
-                return getByte() & 0xff;
+                return Codec.decodeSInt32(getBytes(false));// & 0xff;
             }
             case _float: {
-                float aFloat = buffer.getFloat(offset);
+                float aFloat = buffer.getFloat();
                 offset += 4;
                 return aFloat;
             }
             case _double: {
-                double aDouble = buffer.getDouble(offset);
+                double aDouble = buffer.getDouble();
                 offset += 8;
                 return aDouble;
             }
@@ -184,12 +184,16 @@ public class Decoder {
     }
 
     private byte[] getBytes(boolean flag) {
-        ByteBuffer buf = ByteBuffer.allocate(4);
+        ByteBuffer buf = ByteBuffer.allocate(5);
         int pos = offset;
         flag = flag || false;
-        int b = buffer.getInt(pos);
-        buf.putInt(b);
-        pos += 4;
+		byte b; 
+		do{
+			b = buffer.get();
+			buf.put(b);
+			pos += 1;
+		}while(b<0);
+
         if (!flag) {
             offset = pos;
             buffer.position(pos);

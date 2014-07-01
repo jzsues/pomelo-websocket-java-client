@@ -16,7 +16,18 @@ public class Codec {
     }
 
     public static int decodeUInt32(byte[] bytes) {
-        return ByteUtils.bytesToInt(bytes);
+		int result = 0;
+		for(int i=0; i<bytes.length; i++)
+		{
+			byte tmp = bytes[i];
+			result += (tmp & 0x7f) << 7 * i;
+			if(tmp > 0)
+			{
+				return result;
+			}
+		}
+
+		return result;
     }
 
     public static byte[] encodeSInt32(int num) {
@@ -24,7 +35,10 @@ public class Codec {
     }
 
     public static int decodeSInt32(byte[] bytes) {
-        return ByteUtils.bytesToInt(bytes);
+		int uResult = Codec.decodeUInt32(bytes);
+		int flag = ((uResult % 2) == 1 ) ? -1 : 1;
+
+		return ((uResult % 2 + uResult)/2) * flag;
     }
 
     public static byte[] encodeUInt64(long num) {
