@@ -127,12 +127,12 @@ public class Decoder {
                 return Codec.decodeSInt32(getBytes(false));// & 0xff;
             }
             case _float: {
-                float aFloat = buffer.getFloat(offset);
+                float aFloat = buffer.getFloat();
                 offset += 4;
                 return aFloat;
             }
             case _double: {
-                double aDouble = buffer.getDouble(offset);
+                double aDouble = buffer.getDouble();
                 offset += 8;
                 return aDouble;
             }
